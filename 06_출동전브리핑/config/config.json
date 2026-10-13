@@ -1,0 +1,14 @@
+{
+  "gradeScore": {"Critical": 50, "Major": 35, "Minor": 20, "Warning": 5},
+  "elapsedPerHour": 2, "elapsedMax": 20,
+  "repeatFrom": 3, "repeatPer": 3, "repeatMax": 15,
+  "multiOpen": 5, "tech5g": 10,
+  "levels": [[70, "긴급"], [40, "우선"], [0, "일반"]],
+  "agingYears": 8,
+  "peerMinUnits": 3, "peerRatio": 2.0,
+  "recentDays": 90,
+  "excludedCauses": ["원인 미상(자연복구)"],
+  "highWorkNotice": "고소작업 — 사내 안전기준 확인 (안전대·헬멧·로프 지참)",
+  "towerNotice": "옥외 고소 설비 — 출발 전 기상(강풍·낙뢰) 확인",
+  "highWorkKit": ["안전대", "헬멧", "로프"]
+}

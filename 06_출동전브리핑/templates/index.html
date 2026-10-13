@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>출동 전 브리핑</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #fff; --ink: #1d1d1b; --quiet: #6b6b66; --line: #e2e1dc;
+  --accent: #2f6fdb; --accent-tint: #e8f0fc; --crit: #c8352b; --crit-tint: #fbe9e7;
+  --warn: #b7791f; --warn-tint: #fdf3e1; --ok: #2e7d4f; --ok-tint: #e6f4ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413; --panel: #1f1f1d; --ink: #f1f0ec; --quiet: #a3a29c; --line: #34332f;
+    --accent: #6d9ef0; --accent-tint: #1d2a40; --crit: #ef6b60; --crit-tint: #3a1d1a;
+    --warn: #e0a64a; --warn-tint: #36291a; --ok: #5cbf86; --ok-tint: #18301f;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif; }
+header { padding: 16px 0; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.head-in { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+header h1 { margin: 0; font-size: 18px; }
+.sub { color: var(--quiet); font-size: 13px; }
+.wrap { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 16px; max-width: 1280px; margin: 0 auto; }
+@media (min-width: 900px) { .wrap { grid-template-columns: 420px 1fr; } #detail { position: sticky; top: 92px; max-height: calc(100vh - 108px); overflow: auto; } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.stat { background: var(--bg); border-radius: 8px; padding: 8px; }
+.stat b { display: block; font-size: 20px; }
+.stat span { color: var(--quiet); font-size: 12px; }
+.branches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.branches button, .chip { border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+  border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; min-height: 36px; }
+.branches button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); }
+.filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+.filters select, .filters input[type="search"] { width: 100%; min-height: 40px; padding: 6px 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; }
+.filters .full { grid-column: 1 / -1; }
+label.check input { width: 20px; height: 20px; margin: 0; }
+label.check { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.card { text-align: left; width: 100%; border: 1px solid var(--line); border-left: 5px solid var(--line);
+  background: var(--panel); color: var(--ink); border-radius: 10px; padding: 12px; font: inherit; cursor: pointer; }
+.card[aria-current="true"] { outline: 2px solid var(--accent); }
+.card.긴급 { border-left-color: var(--crit); } .card.우선 { border-left-color: var(--warn); }
+.row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.name { font-weight: 600; }
+.score { font-weight: 700; white-space: nowrap; }
+.긴급 .score { color: var(--crit); } .우선 .score { color: var(--warn); } .일반 .score, .해제 .score { color: var(--quiet); }
+.meta { color: var(--quiet); font-size: 13px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--bg); color: var(--quiet); }
+.tag.고소작업 { background: var(--crit-tint); color: var(--crit); }
+.tag.확인필요, .tag.추정포함 { background: var(--warn-tint); color: var(--warn); }
+.tag.d-지금 { background: var(--crit-tint); color: var(--crit); }
+.tag.d-원격 { background: var(--accent-tint); color: var(--accent); }
+.tag.d-다음 { background: var(--ok-tint); color: var(--ok); }
+.banner { border: 2px solid var(--crit); background: var(--crit-tint); border-radius: 10px; padding: 10px 12px; font-weight: 600; margin: 12px 0 0; }
+.banner.soft { border-color: var(--warn); background: var(--warn-tint); }
+section h3 { font-size: 15px; margin: 18px 0 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.kv { display: grid; grid-template-columns: 88px 1fr; gap: 2px 10px; font-size: 14px; }
+.kv dt { color: var(--quiet); } .kv dd { margin: 0; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--accent); background: var(--accent-tint); color: var(--ink); text-decoration: none; font: inherit; font-size: 14px; cursor: pointer; }
+.cause { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.cause .basis { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 999px; }
+.basis.site { background: var(--ok-tint); color: var(--ok); }
+.basis.global { background: var(--warn-tint); color: var(--warn); }
+.basis.none { background: var(--bg); color: var(--quiet); }
+.ev { font-size: 12.5px; color: var(--quiet); margin: 4px 0 0; padding-left: 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--quiet); font-weight: 500; }
+.scroll { overflow-x: auto; }
+.kit label { display: flex; gap: 8px; align-items: center; min-height: 36px; font-size: 14px; }
+.kit input { width: 20px; height: 20px; }
+.empty { color: var(--quiet); padding: 24px 0; text-align: center; }
+.warnings { font-size: 12.5px; color: var(--warn); margin-top: 8px; }
+#map { height: 420px; border-radius: 10px; border: 1px solid var(--line); margin-bottom: 8px; }
+.views { display: flex; gap: 6px; margin-bottom: 8px; }
+.views button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); }
+.suspect { border: 1px solid var(--warn); background: var(--warn-tint); border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 13px; }
+details summary { cursor: pointer; color: var(--quiet); font-size: 13px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="head-in">
+    <h1>출동 전 원인 브리핑</h1>
+    <div class="sub" id="baseline"></div>
+  </div>
+</header>
+<div class="wrap">
+  <div>
+    <div class="panel">
+      <div class="stats" id="stats"></div>
+      <div class="branches" id="branches" aria-label="지사별 미해제"></div>
+      <div class="filters">
+        <select id="f-dispatch" aria-label="출동 분류"><option value="">분류 전체</option><option>지금 바로 출동</option><option>원격 조치 먼저</option><option>다음 정기점검</option></select>
+        <select id="f-grade" aria-label="등급"><option value="">등급 전체</option><option>Critical</option><option>Major</option><option>Minor</option><option>Warning</option></select>
+        <input class="full" id="f-q" type="search" placeholder="기지국ID · 이름 · 주소 검색">
+        <label class="check"><input type="checkbox" id="f-high"> 고소작업만</label>
+        <label class="check"><input type="checkbox" id="f-all"> 해제된 기지국 포함</label>
+      </div>
+      <div class="views" id="views"><button type="button" class="chip" data-v="list" aria-pressed="true">목록</button><button type="button" class="chip" data-v="map" aria-pressed="false">지도</button></div>
+      <div id="map" hidden></div>
+      <noscript><div class="banner soft">스크립트가 꺼져 있어 필터·상세 카드가 동작하지 않습니다. 브라우저에서 직접 열어 주세요. 아래는 출동 대상 목록입니다.</div></noscript>
+      <div class="list" id="list"><!--__STATIC__--></div>
+      <details style="margin-top:12px"><summary>반복 장애 상위 10 (조치이력 건수)</summary><div class="scroll" id="repeat"></div></details>
+      <details style="margin-top:8px"><summary>펌웨어 · 연식 비교 (장비이력)</summary><div id="peers"></div></details>
+      <div class="warnings" id="warnings"></div>
+    </div>
+  </div>
+  <div class="panel" id="detail"><div class="empty">왼쪽 목록에서 기지국을 고르세요.</div></div>
+</div>
+<script>
+const DATA = /*__BRIEFING__*/null;
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const state = { branch: store.get('brief.branch', ''), selected: null };
+const dtag = d => 'd-' + d.split(' ')[0];
+const hhmm = iso => iso ? iso.slice(11, 16) : '—';
+
+function renderHead() {
+  const m = DATA.meta, c = m.counts;
+  $('#baseline').textContent = `기준 ${m.baseTime.replace('T', ' ').slice(0, 16)} · ${m.source.alarm}` + (m.masked ? ' · 연락처 가림' : '') + (m.namesMasked ? ' · 이름 가림' : '');
+  $('#stats').innerHTML = [
+    [c.openSites, '출동 대상'], [c.open, '미해제 알람'], [c.needsCheck, '확인필요'], [c.alarmSites, '알람 기지국'],
+  ].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('');
+  const btn = (name, label) => `<button type="button" data-b="${esc(name)}" aria-pressed="${state.branch === name}">${esc(label)}</button>`;
+  $('#branches').innerHTML = btn('', '전체') + DATA.branches.map(b => btn(b.name, `${b.name.replace('지사', '')} ${b.open}`)).join('');
+  $('#branches').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.branch = b.dataset.b; store.set('brief.branch', state.branch); renderHead(); renderList();
+  };
+  $('#repeat').innerHTML = `<table><tr><th>기지국</th><th>지사</th><th>과거 조치</th><th>오늘 알람</th></tr>` +
+    DATA.repeatRank.map(r => `<tr><td>${esc(r.id)} ${esc(r.name)}</td><td>${esc(r.branch)}</td><td>${r.historyCount}</td><td>${r.dayCount}</td></tr>`).join('') + '</table>';
+  $('#peers').innerHTML = (DATA.firmwareSuspects.length ? DATA.firmwareSuspects.map(f => `<div class="suspect"><b>${esc(f.kind)} ${esc(f.model)} · FW ${esc(f.firmware)}</b><br>${f.units}대 평균 고장 ${f.avg}회 (같은 구분 평균 ${f.kindAvg}회, ${(f.avg / f.kindAvg).toFixed(1)}배)<br>${f.commonCause ? '공통 원인: <b>' + esc(f.commonCause) + '</b>' : '공통 원인 없음 (원인 분산)'} · ${f.topCauses.map(c => esc(c[0]) + ' ' + c[1]).join(', ')}${f.notes.length ? '<br>비고: ' + f.notes.map(esc).join(', ') : ''}<div class="meta">기지국 ${f.sites.map(esc).join(', ')} · 장비이력 ${f.rows.join(', ')}행</div></div>`).join('') : '<div class="meta">평균의 2배를 넘는 모델·펌웨어 없음</div>')
+    + `<div class="scroll"><table><tr><th>구분</th><th>설치연도</th><th>대수</th><th>평균 고장</th></tr>${DATA.ageCompare.map(r => `<tr><td>${esc(r.kind)}</td><td>${esc(r.bucket)}</td><td>${r.units}</td><td>${r.avg}</td></tr>`).join('')}</table></div>`;
+  if (m.warnings.length) $('#warnings').innerHTML = `<details><summary>⚠️ 데이터 경고 ${m.warnings.length}건</summary>${m.warnings.map(w => `<div>${esc(w)}</div>`).join('')}</details>`;
+}
+
+function filtered() {
+  const q = $('#f-q').value.trim().toLowerCase(), d = $('#f-dispatch').value, g = $('#f-grade').value;
+  const high = $('#f-high').checked, all = $('#f-all').checked;
+  return DATA.sites.filter(s => (all || s.isOpen)
+    && (!state.branch || s.branch === state.branch)
+    && (!d || (s.isOpen && s.dispatch === d))
+    && (!g || s.topGrade === g)
+    && (!high || s.highWork)
+    && (!q || `${s.id} ${s.name} ${s.address}`.toLowerCase().includes(q)));
+}
+
+function renderList() {
+  const rows = filtered();
+  if (!$('#map').hidden) renderMap(rows);
+  $('#list').innerHTML = rows.length ? rows.map(s => `
+    <button type="button" class="card ${esc(s.level)}" data-id="${esc(s.id)}" aria-current="${state.selected === s.id}">
+      <div class="row"><span class="name">${s.rank ? s.rank + '. ' : ''}${esc(s.id)} · ${esc(s.name)}</span><span class="score">${s.isOpen ? s.score + ' ' + esc(s.level) : '해제'}</span></div>
+      <div class="meta">${esc(s.branch)} · ${esc(s.topGrade)} · 미해제 ${s.openAlarms.length}건${s.isOpen ? ' · ' + s.openHours + '시간 경과' : ''} · 오늘 ${s.dayCount}건</div>
+      <div class="tags">${s.isOpen ? `<span class="tag ${dtag(s.dispatch)}">${esc(s.dispatch)}</span>` : ''}${s.tech === '5G' ? '<span class="tag">5G</span>' : ''}${s.tags.map(t => `<span class="tag ${esc(t)}">${esc(t)}</span>`).join('')}</div>
+    </button>`).join('') : '<div class="empty">조건에 맞는 기지국이 없습니다.</div>';
+}
+
+let map = null, layer = null;
+const levelColor = { '긴급': '#c8352b', '우선': '#b7791f', '일반': '#6b6b66', '해제': '#9a9a94' };
+let leafletState = 'idle';
+function loadLeaflet(done) {
+  if (leafletState === 'ready') return done();
+  if (leafletState !== 'idle') return;
+  leafletState = 'loading';
+  $('#map').innerHTML = '<div class="empty">지도 불러오는 중…</div>';
+  const base = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+  const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = base + 'leaflet.min.css'; document.head.appendChild(css);
+  const js = document.createElement('script'); js.src = base + 'leaflet.min.js'; js.async = true;
+  const fail = () => { leafletState = 'failed'; $('#map').innerHTML = '<div class="empty">지도 라이브러리를 불러오지 못했습니다 (네트워크 차단 또는 오프라인). 목록은 그대로 쓸 수 있습니다.</div>'; };
+  const timer = setTimeout(fail, 8000);
+  js.onload = () => { clearTimeout(timer); leafletState = 'ready'; $('#map').innerHTML = ''; done(); };
+  js.onerror = () => { clearTimeout(timer); fail(); };
+  document.head.appendChild(js);
+}
+function renderMap(rows) {
+  if (typeof L === 'undefined') { loadLeaflet(() => renderMap(filtered())); return; }
+  if (!map) {
+    map = L.map('map'); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
+  }
+  if (layer) layer.remove();
+  const pts = rows.filter(s => s.lat && s.lng);
+  layer = L.layerGroup(pts.map(s => L.circleMarker([s.lat, s.lng], { radius: s.isOpen ? 9 : 5, color: levelColor[s.level], weight: 2, fillOpacity: 0.6 })
+    .bindTooltip(`${s.rank ? s.rank + '. ' : ''}${s.id} ${s.name} · ${s.isOpen ? s.score + ' ' + s.level : '해제'}`)
+    .on('click', () => renderDetail(s.id)))).addTo(map);
+  if (pts.length) map.fitBounds(pts.map(s => [s.lat, s.lng]), { padding: [24, 24], maxZoom: 12 });
+  setTimeout(() => map.invalidateSize(), 0);
+}
+
+function renderDetail(id) {
+  const s = DATA.sites.find(x => x.id === id); if (!s) return;
+  state.selected = id;
+  const kitKey = `brief.kit.${DATA.meta.source.alarm}.${s.id}`, done = store.get(kitKey, []);
+  const map = s.lat && s.lng ? `<a class="btn" target="_blank" rel="noopener" href="https://map.kakao.com/link/map/${encodeURIComponent(s.name)},${s.lat},${s.lng}">카카오맵</a>
+    <a class="btn" target="_blank" rel="noopener" href="https://map.naver.com/v5/search/${encodeURIComponent(s.address || s.name)}">네이버지도</a>` : '';
+  const tel = s.contact.phone && !s.contact.phone.includes('*') ? `<a class="btn" href="tel:${esc(s.contact.phone)}">전화</a>` : '';
+  const p = s.scoreParts;
+  $('#detail').innerHTML = `
+    <div class="row"><h2 style="margin:0;font-size:18px">${esc(s.id)} · ${esc(s.name)}</h2><span class="score ${esc(s.level)}">${s.isOpen ? s.score + '점 ' + esc(s.level) : '해제'}</span></div>
+    <div class="tags">${s.isOpen ? `<span class="tag ${dtag(s.dispatch)}">${esc(s.dispatch)}</span>` : ''}${s.tags.map(t => `<span class="tag ${esc(t)}">${esc(t)}</span>`).join('')}</div>
+    ${s.notices.map((n, i) => `<div class="banner ${i ? 'soft' : ''}">⚠️ ${esc(n)}</div>`).join('')}
+    <section><h3>위치 · 현장</h3><dl class="kv">
+      <dt>주소</dt><dd>${esc(s.address)}</dd><dt>지사</dt><dd>${esc(s.region)} · ${esc(s.branch)}</dd>
+      <dt>장비</dt><dd>${esc(s.vendor)} ${esc(s.model)} · ${esc(s.tech)} · ${esc(s.installYear)}년</dd>
+      <dt>설치형태</dt><dd>${esc(s.installType)} · 고소작업 ${s.highWork ? 'Y' : 'N'}</dd>
+      <dt>담당자</dt><dd>${esc(s.contact.name)} ${esc(s.contact.phone)}</dd></dl>
+      <div class="actions">${map}${tel}</div></section>
+    <section><h3>오늘 알람 (${s.openAlarms.length ? '미해제 ' + s.openAlarms.length : '전체 ' + s.history.length}건)</h3><div class="scroll"><table>
+      <tr><th>발생</th><th>등급</th><th>알람</th><th>유형</th></tr>
+      ${(s.openAlarms.length ? s.openAlarms : s.history).map(a => `<tr><td>${hhmm(a.raisedAt)}</td><td>${esc(a.grade)}</td><td>${esc(a.name)}<div class="meta">${esc(a.code)}${a.needsCheck ? ' · 확인필요(해제시각 없음)' : ''}</div></td><td>${esc(a.type)}</td></tr>`).join('')}
+    </table></div>
+    <details><summary>당일 이력 ${s.history.length}건</summary><table>${s.history.map(a => `<tr><td>${hhmm(a.raisedAt)}–${hhmm(a.clearedAt)}</td><td>${esc(a.grade)}</td><td>${esc(a.name)}</td></tr>`).join('')}</table></details></section>
+    <section><h3>예상 원인 · 근거</h3>${s.causes.map(c => `
+      <div class="cause"><div class="row"><b>${esc(c.symptom)}</b><span class="basis ${c.basis}">${{site: '근거', global: '추정', none: '근거 없음'}[c.basis]}</span></div>
+        <div class="meta">이 기지국 과거 ${c.siteHistory}회 · 최근 90일 ${c.siteRecent}회${c.naturalRecovery ? ' · 자연복구 ' + c.naturalRecovery + '회' : ''}${c.recurred ? ' · 조치 후 재발 ' + c.recurred + '회' : ''}</div>
+        ${c.cause ? `<div style="margin-top:6px">${c.basis === 'global' ? '추정: ' : ''}<b>${esc(c.cause)}</b> → ${esc(c.action)} <span class="meta">(${esc(c.confidence)}${c.basis === 'global' ? ', 다른 기지국 같은 증상' : ''})</span></div>
+        <ul class="ev">${c.evidence.map(e => `<li>${esc(e.file)} ${e.row}행 · ${esc(e.date)} · ${esc(e.site)}${e.recurred ? ' · 재발' : ''}</li>`).join('')}</ul>` : '<div class="meta">조치이력에 같은 증상이 없어 원인을 추정하지 않음</div>'}
+      </div>`).join('')}</section>
+    <section><h3>관련 장비 (장비이력)</h3>${s.equipment.length ? `<div class="scroll"><table><tr><th>구분</th><th>장비</th><th>FW</th><th>설치/교체</th><th>고장</th></tr>
+      ${s.equipment.map(e => `<tr><td>${esc(e.kind)}</td><td>${esc(e.vendor)} ${esc(e.model)}<div class="meta">${esc(e.serial)} · ${e.row}행${e.note ? ' · ' + esc(e.note) : ''}</div>${e.peer.suspect ? `<div class="suspect">⚠️ 같은 모델·펌웨어 ${e.peer.units}대 평균 ${e.peer.avg}회 (구분 평균 ${e.peer.kindAvg}회)</div>` : ''}</td><td>${esc(e.firmware)}</td><td>${esc(e.installed)}${e.replaced ? '<br>' + esc(e.replaced) : ''}${e.aging ? ' <span class="tag 확인필요">노후</span>' : ''}</td><td>${e.failures}</td></tr>`).join('')}</table></div>` : '<div class="meta">장비이력 없음</div>'}</section>
+    <section class="kit"><h3>챙길 자재</h3>${s.kit.map(k => `<label><input type="checkbox" data-k="${esc(k)}" ${done.includes(k) ? 'checked' : ''}> ${esc(k)}</label>`).join('')}</section>
+    ${p ? `<details style="margin-top:12px"><summary>점수 계산</summary><div class="meta">등급 ${p.grade} + 경과 ${p.elapsed} + 반복 ${p.repeat} + 다중 ${p.multi} + 5G ${p.tech} = ${s.score}</div></details>` : ''}
+    <div class="actions" style="margin-top:12px"><button type="button" class="btn" id="copy">브리핑 텍스트 복사</button></div>`;
+  $('#detail').querySelector('.kit').onchange = e => {
+    const k = e.target.dataset.k; if (!k) return;
+    const cur = new Set(store.get(kitKey, [])); e.target.checked ? cur.add(k) : cur.delete(k); store.set(kitKey, [...cur]);
+  };
+  $('#copy').onclick = async () => {
+    const t = [`[${s.id} ${s.name}] ${s.isOpen ? s.score + '점 ' + s.level + ' · ' + s.dispatch : '해제'}`, s.address,
+      ...s.openAlarms.map(a => `- ${hhmm(a.raisedAt)} ${a.grade} ${a.name}`),
+      ...s.causes.filter(c => c.cause).map(c => `원인${c.basis === 'global' ? '(추정)' : ''}: ${c.cause} → ${c.action}`),
+      `자재: ${s.kit.join(', ')}`, ...s.notices].join('\n');
+    try { await navigator.clipboard.writeText(t); $('#copy').textContent = '복사됨'; } catch { $('#copy').textContent = '복사 실패'; }
+  };
+  renderList();
+  if (window.innerWidth < 900) $('#detail').scrollIntoView({ behavior: 'smooth' });
+}
+
+if (!DATA) {
+  document.body.innerHTML = '<p style="padding:16px">데이터가 없습니다. <code>python prepare.py</code>로 dist/index.html을 생성하세요.</p>';
+} else {
+  renderHead(); renderList();
+  ['#f-q', '#f-dispatch', '#f-grade', '#f-high', '#f-all'].forEach(s => $(s).addEventListener('input', renderList));
+  $('#views').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const isMap = b.dataset.v === 'map';
+    $('#views').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    $('#map').hidden = !isMap; renderList();
+  };
+  $('#list').onclick = e => { const c = e.target.closest('.card'); if (c) renderDetail(c.dataset.id); };
+  const first = DATA.sites.find(s => s.isOpen); if (first && window.innerWidth >= 900) renderDetail(first.id);
+}
+</script>
+</body>
+</html>

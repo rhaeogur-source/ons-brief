@@ -1,0 +1,40 @@
+알람명,표준유형
+SYNC REFERENCE SOURCE LOST,동기실패
+DU Clock Sync Loss (GPS),동기실패
+TimeSyncIO Reference Failed,동기실패
+BTS RESET UNEXPECTED,DU비정상재시작
+DU Software Abnormal Restart,DU비정상재시작
+Unexpected Node Restart,DU비정상재시작
+BASE STATION FAULTY - SYSTEM MODULE,DU하드웨어장애
+DU Board Fail,DU하드웨어장애
+Baseband HW Fault,DU하드웨어장애
+ANTENNA LINE VSWR MAJOR,VSWR이상
+RU VSWR High,VSWR이상
+VSWR Over Threshold,VSWR이상
+RF MODULE OVERHEAT,RU온도상승
+RU Temperature High,RU온도상승
+Radio Temperature Exceeded,RU온도상승
+CELL FAULTY - RF MODULE LINK LOST,RU링크단절
+RU Link Down (CPRI),RU링크단절
+RiLink Failure,RU링크단절
+SFP RX OPTICAL POWER LOW,광수신파워저하
+SFP Rx Power Low,광수신파워저하
+SFP Receive Power Low,광수신파워저하
+SFP MODULE NOT DETECTED,광모듈미장착
+SFP Not Present,광모듈미장착
+SFP Module Missing,광모듈미장착
+TRANSPORT ETHERNET LINK DOWN,백홀단절
+Backhaul Link Down,백홀단절
+Transport Link Failure,백홀단절
+ETHERNET FRAME ERROR RATE,전송품질저하
+Ethernet CRC Error,전송품질저하
+Ethernet Port Degraded,전송품질저하
+EXTERNAL AC POWER FAILURE,상용전원차단
+AC Mains Fail,상용전원차단
+Mains Failure,상용전원차단
+BATTERY UNDER VOLTAGE,배터리저전압
+Battery Low Voltage,배터리저전압
+Battery Voltage Too Low,배터리저전압
+POWER RECTIFIER UNIT FAULT,정류모듈장애
+Rectifier Module Fail,정류모듈장애
+PSU Fault,정류모듈장애
