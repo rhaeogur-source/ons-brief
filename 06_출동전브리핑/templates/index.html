@@ -84,6 +84,9 @@ th { color: var(--quiet); font-weight: 500; }
 .views { display: flex; gap: 6px; margin-bottom: 8px; }
 .views button[aria-pressed="true"] { background: var(--accent-tint); border-color: var(--accent); }
 .suspect { border: 1px solid var(--warn); background: var(--warn-tint); border-radius: 10px; padding: 8px 10px; margin: 6px 0; font-size: 13px; }
+.be { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.be input { flex: 1 1 260px; min-width: 0; padding: 6px 8px; border: 1px solid var(--line, #ccc); border-radius: 8px; font: inherit; }
+.be .ok { color: #1a7f37; } .be .bad { color: #c62828; }
 details summary { cursor: pointer; color: var(--quiet); font-size: 13px; }
 </style>
 </head>
@@ -92,6 +95,12 @@ details summary { cursor: pointer; color: var(--quiet); font-size: 13px; }
   <div class="head-in">
     <h1>출동 전 원인 브리핑</h1>
     <div class="sub" id="baseline"></div>
+    <div class="be" role="group" aria-label="백엔드 연결">
+      <input id="be-url" type="url" placeholder="백엔드 주소 (예: https://xxx.trycloudflare.com)" aria-label="백엔드 주소">
+      <button type="button" class="chip" id="be-test">연결 테스트</button>
+      <button type="button" class="chip" id="be-load">데이터 불러오기</button>
+      <span class="sub" id="be-status" aria-live="polite">내장 데이터 사용 중</span>
+    </div>
   </div>
 </header>
 <div class="wrap">
@@ -118,7 +127,7 @@ details summary { cursor: pointer; color: var(--quiet); font-size: 13px; }
   <div class="panel" id="detail"><div class="empty">왼쪽 목록에서 기지국을 고르세요.</div></div>
 </div>
 <script>
-const DATA = /*__BRIEFING__*/null;
+let DATA = /*__BRIEFING__*/null;
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const store = {
@@ -264,6 +273,44 @@ if (!DATA) {
   $('#list').onclick = e => { const c = e.target.closest('.card'); if (c) renderDetail(c.dataset.id); };
   const first = DATA.sites.find(s => s.isOpen); if (first && window.innerWidth >= 900) renderDetail(first.id);
 }
+
+// 백엔드 연결: 주소 입력 → /api/health 테스트 → /api/briefing 불러오기
+const be = {
+  url: () => $('#be-url').value.trim().replace(/\/+$/, ''),
+  say(msg, cls) { const el = $('#be-status'); el.textContent = msg; el.className = 'sub ' + (cls || ''); },
+  async get(path) {
+    const base = be.url();
+    if (!/^https?:\/\//.test(base)) throw new Error('http(s):// 로 시작하는 주소를 입력하세요');
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const r = await fetch(base + path, { signal: ctl.signal, cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (e) { throw new Error(e.name === 'AbortError' ? '응답 없음 (8초 초과)' : e.message); }
+    finally { clearTimeout(t); }
+  },
+};
+$('#be-url').value = store.get('brief.backend', '');
+$('#be-url').addEventListener('change', () => store.set('brief.backend', be.url()));
+$('#be-test').onclick = async () => {
+  store.set('brief.backend', be.url()); be.say('테스트 중…');
+  const t0 = performance.now();
+  try {
+    const h = await be.get('/api/health');
+    if (!h.ok) throw new Error('health 응답 ok=false');
+    be.say(`✅ 연결됨 · ${Math.round(performance.now() - t0)}ms · 기준 ${String(h.baseTime || '—').replace('T', ' ').slice(0, 16)} · 미해제 ${h.open ?? '—'}`, 'ok');
+  } catch (e) { be.say('❌ 실패: ' + e.message, 'bad'); }
+};
+$('#be-load').onclick = async () => {
+  be.say('불러오는 중…');
+  try {
+    const d = await be.get('/api/briefing');
+    if (!d.meta || !Array.isArray(d.sites)) throw new Error('브리핑 형식이 아님');
+    DATA = d; renderHead(); renderList();
+    const first = DATA.sites.find(s => s.isOpen); if (first) renderDetail(first.id);
+    be.say(`✅ 백엔드 데이터 적용 · 기지국 ${d.sites.length}곳`, 'ok');
+  } catch (e) { be.say('❌ 불러오기 실패: ' + e.message + ' (내장 데이터 유지)', 'bad'); }
+};
 </script>
 </body>
 </html>
